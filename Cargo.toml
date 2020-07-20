@@ -8,3 +8,21 @@ edition = "2018"
 bootloader = "0.9.8"
 rlibc = "1.0.0"
 volatile = "0.2.6"
+
+# Provies a Mutex that is very minimal -
+# try to lock until you managed to do that
+# otherwise spin. This is required as the
+# OS at this level doesn't have the concept of
+# threads and is unable to handle things like Mutex.
+[dependencies.spin]
+version = "0.5.2"
+
+# Adding this as we need to initialise a WRITER that
+# is static. However Rusts `const evaluator` is not
+# able to do that at the moment at compile time.
+#
+# So this package helps us establish a static WRITER,
+# the first time it is required.
+[dependencies.lazy_static]
+version = "1.0"
+features = ["spin_no_std"]

@@ -1,5 +1,7 @@
 use volatile::Volatile; // Required to avoid the compiler optimising stuff away
 use core::fmt; // Required as we'll be using the write macros.
+use lazy_static::lazy_static; // see Cargo.toml
+use spin::Mutex; // see Cargo.toml;
 
 /// Allowed colors that VGA can handle
 #[allow(dead_code)]
@@ -158,7 +160,36 @@ impl Writer {
     }
 
 
-    fn new_line(&mut self) {/* TODO */}
+    /// Basically this implements how we shuffle the
+    /// buffer around in order to add a new line.
+    ///
+    /// The idea is that we first copy the characters in their respective
+    /// rows one row up. Then we clear the last row of all
+    /// the leftover characters.
+    ///
+    /// And finally reset the column position of the writer.
+    fn new_line(&mut self) {
+        for row in 1..BUFFER_HEIGHT {
+            for col in 0..BUFFER_WIDTH {
+                let character = self.buffer.chars[row][col].read();
+                self.buffer.chars[row - 1][col].write(character);
+            }
+        }
+        self.clear_row(BUFFER_HEIGHT - 1);
+        self.column_position = 0;
+    }
+
+    /// This method replaces all the characters int the last row
+    /// with empty space characters.
+    fn clear_row(&mut self, row: usize) {
+        let blank = ScreenChar {
+            ascii_character: b' ',
+            color_code: self.color_code,
+        };
+        for col in 0..BUFFER_WIDTH {
+            self.buffer.chars[row][col].write(blank);
+        }
+    }
 }
 
 impl fmt::Write for Writer {
@@ -168,13 +199,32 @@ impl fmt::Write for Writer {
     }
 }
 
-pub fn print_something() {
-    use core::fmt::Write;
-    let mut writer = Writer {
+// Create a static writer when we need it for the first time.
+// As we can't do it at compile time due to us dereferencing
+// a raw pointer (???) and the `const evaluator` is not able to
+// handle that.
+lazy_static! {
+    pub static ref WRITER: Mutex<Writer> = Mutex::new(Writer {
         column_position: 0,
         color_code: ColorCode::new(Color::Yellow, Color::Black),
         buffer: unsafe { &mut *(0xb8000 as *mut Buffer) },
-    };
+    });
+}
 
-    write!(writer, "The numbers are {}, {}", 10 * 100, 1/100).unwrap();
+// `Borrowed` from the definition of println
+#[macro_export]
+macro_rules! print {
+    ($($arg:tt)*) => ($crate::vga_buffer::_print(format_args!($($arg)*)));
+}
+
+#[macro_export]
+macro_rules! println {
+    () => ($crate::print!("\n"));
+    ($($arg:tt)*) => ($crate::print!("{}\n", format_args!($($arg)*)));
+}
+
+#[doc(hidden)]
+pub fn _print(args: fmt::Arguments) {
+    use core::fmt::Write;
+    WRITER.lock().write_fmt(args).unwrap();
 }

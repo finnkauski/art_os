@@ -12,14 +12,18 @@ use core::panic::PanicInfo; // A type used for the panic handler
 // boot process.
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
-    vga_buffer::print_something();
-    loop {}
+    println!("Hello World{}", "!");
+    panic!("Some info");
 }
 
 /// This function is called on panic.
 ///
 /// We use the abort strategy - we don't do unwinding.
+///
+/// After making the println! macro we added the printout
+/// of the panic info.
 #[panic_handler]
-fn panic(_info: &PanicInfo) -> ! {
+fn panic(info: &PanicInfo) -> ! {
+    println!("{}", info);
     loop {}
 }

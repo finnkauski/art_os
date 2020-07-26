@@ -1,7 +1,7 @@
 #![no_std]
 #![cfg_attr(test, no_main)] // Define that we have no main and test
 #![feature(custom_test_frameworks)] // Allow custom testing framework interface
-#![feature(abi_x86_interrupt)]
+#![feature(abi_x86_interrupt)] // Required as the extern x86_interrupt convention is unstable
 #![test_runner(crate::test_runner)] // Define what runs a test
 #![reexport_test_harness_main = "test_main"] // Avoid name clashes with normal main for the runner
 

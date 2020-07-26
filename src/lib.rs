@@ -11,12 +11,14 @@ extern crate rlibc;
 // Required for panic handling
 use core::panic::PanicInfo;
 
+pub mod gdt;
 pub mod interrupts;
 pub mod serial;
 pub mod vga_buffer;
 
 pub fn init() {
-    interrupts::init_idt();
+    gdt::init(); // initialise the global descriptor table
+    interrupts::init_idt(); // interrupt descriptor table
 }
 
 // Define a more explicit type for testing

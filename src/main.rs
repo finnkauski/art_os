@@ -13,12 +13,6 @@ pub extern "C" fn _start() -> ! {
 
     blog_os::init();
 
-    // trigger a page fault
-    fn stack_overflow() {
-        stack_overflow(); // for each recursion, the return address is pushed
-    }
-    stack_overflow();
-
     #[cfg(test)]
     test_main();
 

@@ -46,3 +46,8 @@ test-args = [ # - enables shutdow device              -  - enables piping from s
 ] # redirects serial to stdio.
 test-success-exit-code = 33 # change exit code as the ones supported by QEMU clash
 test-timeout = 150 # in case we get into an infinite loop
+# in Cargo.toml
+
+[[test]]
+name = "stack_overflow"
+harness = false
